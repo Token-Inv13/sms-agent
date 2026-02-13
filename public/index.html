@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
+  <meta name="theme-color" content="#ffffff" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="SMS Agent" />
+  <title>SMS Agent</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+</head>
+<body>
+  <main class="phone">
+    <section id="screenAuth" class="screen">
+      <section id="auth" class="auth">
+        <div class="authTitle">Connexion</div>
+        <div class="authRow">
+          <label for="email">Email</label>
+          <input id="email" type="email" placeholder="toi@exemple.com" />
+        </div>
+        <div class="authRow">
+          <label for="password">Mot de passe</label>
+          <input id="password" type="password" placeholder="••••••••" />
+        </div>
+        <div class="authActions">
+          <button id="loginBtn" type="button">Se connecter</button>
+          <button id="signupBtn" class="secondary" type="button">Créer un compte</button>
+        </div>
+        <div id="authMsg" class="authMsg"></div>
+      </section>
+    </section>
+
+    <section id="screenMessages" class="screen hidden">
+      <section id="convos" class="convos">
+        <div class="convosTop">
+          <div class="convosTitle">Messages</div>
+          <div style="display:flex;gap:10px">
+            <button id="globalSettingsBtn" class="iconbtn" type="button">Réglages</button>
+            <button id="newConvoBtn" class="iconbtn" type="button">Nouveau</button>
+          </div>
+        </div>
+        <input id="convosSearch" class="convosSearch" type="text" placeholder="Rechercher" />
+        <div id="convosList" class="convosList"></div>
+      </section>
+    </section>
+
+    <section id="screenGlobalSettings" class="screen hidden">
+      <header class="topbar">
+        <button id="globalSettingsBackBtn" class="iconbtn" type="button">Retour</button>
+        <div class="topbarLeft">
+          <div class="title">Réglages</div>
+        </div>
+        <div style="width:84px"></div>
+      </header>
+
+      <section class="settings">
+        <div class="settingsSectionTitle">Abonnement</div>
+        <div class="settingsCard">
+          <div class="settingsRow">
+            <div>Plan</div>
+            <div id="billingPlan" class="settingsValue">—</div>
+          </div>
+          <div class="settingsRow">
+            <div>Quota (aujourd’hui)</div>
+            <div id="billingUsage" class="settingsValue">—</div>
+          </div>
+          <div class="settingsActions">
+            <button id="billingUpgradeBtn" type="button">Passer en Pro</button>
+            <button id="billingManageBtn" type="button" class="secondary">Gérer</button>
+            <button id="billingRefreshBtn" type="button" class="secondary">Actualiser</button>
+          </div>
+          <div id="billingMsg" class="authMsg"></div>
+        </div>
+
+        <div class="settingsSectionTitle">Smart Note</div>
+        <div class="settingsCard">
+          <div class="settingsRow">
+            <div>Statut</div>
+            <div id="smartNoteStatus" class="settingsValue">—</div>
+          </div>
+          <div class="settingsRow">
+            <label for="smartNoteToken">Token</label>
+            <input id="smartNoteToken" type="password" placeholder="sn_live_..." />
+          </div>
+          <div class="settingsActions">
+            <button id="smartNoteConnectBtn" type="button">Connecter</button>
+            <button id="smartNoteDisconnectBtn" type="button" class="secondary">Déconnecter</button>
+            <button id="smartNoteRefreshBtn" type="button" class="secondary">Actualiser</button>
+          </div>
+          <div id="smartNoteMsg" class="authMsg"></div>
+        </div>
+
+        <div class="settingsRow">
+          <label for="themeMode">Thème</label>
+          <select id="themeMode">
+            <option value="light">Clair</option>
+            <option value="dark">Sombre</option>
+          </select>
+        </div>
+
+        <div class="settingsRow">
+          <label for="notificationsEnabled">Notifications</label>
+          <input id="notificationsEnabled" type="checkbox" />
+        </div>
+
+        <div class="settingsRow">
+          <label for="matureLanguageEnabled">Langage mature</label>
+          <input id="matureLanguageEnabled" type="checkbox" />
+        </div>
+
+        <div class="settingsRow">
+          <label for="sensitiveTopicsEnabled">Sujets sensibles</label>
+          <input id="sensitiveTopicsEnabled" type="checkbox" />
+        </div>
+
+        <div class="settingsRow">
+          <label for="isAdultConfirmed">J’ai 18+ ans</label>
+          <input id="isAdultConfirmed" type="checkbox" />
+        </div>
+
+        <div class="settingsActions">
+          <button id="saveUserSettings" type="button">Enregistrer</button>
+        </div>
+
+        <div id="userSettingsMsg" class="authMsg"></div>
+      </section>
+    </section>
+
+    <section id="screenDirectory" class="screen hidden">
+      <header class="topbar">
+        <button id="directoryBackBtn" class="iconbtn" type="button">Retour</button>
+        <div class="topbarLeft">
+          <div class="title">Nouveau message</div>
+        </div>
+        <div style="width:84px"></div>
+      </header>
+      <div class="directory">
+        <div class="modalTabs">
+          <button id="tabDirectory" class="tab active" type="button">Répertoire</button>
+          <button id="tabManage" class="tab" type="button">Mes destinataires</button>
+        </div>
+        <input id="recipientSearch" class="modalSearch" type="text" placeholder="Rechercher..." />
+        <div id="recipientList" class="recipientList"></div>
+
+        <div id="presetEditor" class="presetEditor hidden">
+          <div class="presetEditorTop">
+            <div class="presetEditorTitle">Créer / modifier</div>
+            <button id="newPresetBtn" class="iconbtn" type="button">Nouveau</button>
+          </div>
+
+          <div class="presetGrid">
+            <input id="pTitle" type="text" placeholder="Nom (ex: Emma)" />
+            <input id="pSubtitle" type="text" placeholder="Description (ex: Ami(e) chill)" />
+            <input id="pContact" type="text" placeholder="Nom affiché" />
+            <select id="pPersona">
+              <option value="friend">Ami(e)</option>
+              <option value="employer">Employeur / Recruteur</option>
+              <option value="partner">Partenaire</option>
+              <option value="customer_support">Support client</option>
+              <option value="custom">Personnalisé</option>
+            </select>
+            <select id="pGender">
+              <option value="neutral">Neutre</option>
+              <option value="female">Femme</option>
+              <option value="male">Homme</option>
+            </select>
+            <textarea id="pContext" rows="3" placeholder="Contexte / scénario"></textarea>
+          </div>
+
+          <div class="presetActions">
+            <button id="startPresetBtn" class="secondary" type="button">Démarrer une conversation</button>
+            <button id="savePresetBtn" type="button">Enregistrer</button>
+            <button id="deletePresetBtn" class="danger" type="button">Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenChat" class="screen hidden">
+      <header class="topbar">
+        <button id="threadBackBtn" class="iconbtn" type="button">Retour</button>
+        <div class="topbarLeft">
+          <div id="contactAvatar" class="avatar" aria-hidden="true">A</div>
+          <div>
+            <div id="contactName" class="title">Assistant</div>
+            <div id="contactStatus" class="sub">En ligne</div>
+          </div>
+        </div>
+        <button id="threadSettingsBtn" class="iconbtn" type="button">Réglages</button>
+      </header>
+
+      <section id="chat" class="chat"></section>
+
+      <div id="typing" class="typing hidden">
+        <span></span><span></span><span></span>
+      </div>
+
+      <form id="form" class="composer" autocomplete="off">
+        <input id="fileInput" type="file" accept="image/*" class="hidden" />
+        <input
+          id="docInput"
+          type="file"
+          accept=".pdf,.txt,.md,.csv,.json,application/pdf,text/plain,text/markdown,text/csv,application/json"
+          class="hidden"
+        />
+        <div id="attachPreview" class="attachPreview hidden">
+          <img id="attachThumb" alt="Aperçu" />
+          <div id="attachLabel" class="attachLabel"></div>
+          <button id="attachRemove" type="button" aria-label="Retirer">×</button>
+        </div>
+        <button id="attachBtn" class="plusbtn" type="button" aria-label="Joindre">📎</button>
+        <button id="plusBtn" class="plusbtn" type="button" aria-label="Analyser un fichier">+</button>
+        <textarea id="input" rows="1" placeholder="Message..." aria-label="Message"></textarea>
+        <button id="sendBtn" type="submit">Envoyer</button>
+      </form>
+    </section>
+
+    <section id="screenThreadSettings" class="screen hidden">
+      <header class="topbar">
+        <button id="settingsBackBtn" class="iconbtn" type="button">Retour</button>
+        <div class="topbarLeft">
+          <div class="title">Réglages</div>
+        </div>
+        <div style="width:84px"></div>
+      </header>
+
+      <section class="settings">
+        <div class="settingsRow">
+          <label for="sContact">Destinataire</label>
+          <input id="sContact" type="text" placeholder="Nom (ex: Emma)" />
+        </div>
+
+        <div class="settingsRow">
+          <label for="sPersona">Style</label>
+          <select id="sPersona">
+            <option value="friend">Ami(e)</option>
+            <option value="employer">Employeur / Recruteur</option>
+            <option value="partner">Partenaire</option>
+            <option value="customer_support">Support client</option>
+            <option value="custom">Personnalisé</option>
+          </select>
+        </div>
+
+        <div class="settingsRow">
+          <label for="sContext">Contexte</label>
+          <textarea id="sContext" rows="3" placeholder="Contexte (court)"></textarea>
+        </div>
+
+        <div class="settingsRow">
+          <label for="sourcesEnabled">Sources</label>
+          <input id="sourcesEnabled" type="checkbox" />
+        </div>
+
+        <div class="settingsRow">
+          <label for="randomMessagesEnabled">Messages aléatoires</label>
+          <input id="randomMessagesEnabled" type="checkbox" />
+        </div>
+
+        <div class="settingsActions">
+          <button id="saveSettings" type="button">Enregistrer</button>
+        </div>
+      </section>
+    </section>
+
+    <section id="convoMenu" class="modal hidden" aria-hidden="true">
+      <div class="sheetCard">
+        <button id="convoSmartNoteTask" class="sheetBtn" type="button">Créer tâche Smart Note</button>
+        <button id="convoRename" class="sheetBtn" type="button">Renommer</button>
+        <button id="convoDelete" class="sheetBtn danger" type="button">Supprimer</button>
+        <button id="convoMenuClose" class="sheetBtn secondary" type="button">Annuler</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
