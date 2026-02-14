@@ -38,6 +38,19 @@ const directoryBackBtn = document.getElementById("directoryBackBtn");
 const globalSettingsBackBtn = document.getElementById("globalSettingsBackBtn");
 const themeModeEl = document.getElementById("themeMode");
 const notificationsEnabledEl = document.getElementById("notificationsEnabled");
+const billingPlanEl = document.getElementById("billingPlan");
+const billingUsageEl = document.getElementById("billingUsage");
+const billingUpgradeBtn = document.getElementById("billingUpgradeBtn");
+const billingManageBtn = document.getElementById("billingManageBtn");
+const billingRefreshBtn = document.getElementById("billingRefreshBtn");
+const billingMsg = document.getElementById("billingMsg");
+
+const smartNoteStatusEl = document.getElementById("smartNoteStatus");
+const smartNoteTokenEl = document.getElementById("smartNoteToken");
+const smartNoteConnectBtn = document.getElementById("smartNoteConnectBtn");
+const smartNoteDisconnectBtn = document.getElementById("smartNoteDisconnectBtn");
+const smartNoteRefreshBtn = document.getElementById("smartNoteRefreshBtn");
+const smartNoteMsg = document.getElementById("smartNoteMsg");
 const matureLanguageEnabledEl = document.getElementById("matureLanguageEnabled");
 const sensitiveTopicsEnabledEl = document.getElementById("sensitiveTopicsEnabled");
 const isAdultConfirmedEl = document.getElementById("isAdultConfirmed");
@@ -73,6 +86,7 @@ const convoMenu = document.getElementById("convoMenu");
 const convoRename = document.getElementById("convoRename");
 const convoDelete = document.getElementById("convoDelete");
 const convoMenuClose = document.getElementById("convoMenuClose");
+const convoSmartNoteTask = document.getElementById("convoSmartNoteTask");
 
 const threadBackBtn = document.getElementById("threadBackBtn");
 const threadSettingsBtn = document.getElementById("threadSettingsBtn");
@@ -473,6 +487,128 @@ function setScreen(name) {
   if (threadSettings) threadSettings.classList.toggle("hidden", name !== "threadSettings");
 }
 
+function setBillingMessage(msg) {
+  if (!billingMsg) return;
+  billingMsg.textContent = msg || "";
+}
+
+function renderBillingStatus(status) {
+  if (!billingPlanEl || !billingUsageEl) return;
+  const plan = String(status?.plan || "free");
+  billingPlanEl.textContent = plan === "pro" ? "Pro" : "Gratuit";
+
+  const daily = status?.daily || {};
+  if (plan === "pro") {
+    billingUsageEl.textContent = "Illimité";
+  } else {
+    const used = Number(daily?.used || 0);
+    const limit = Number(daily?.limit || 20);
+    const remaining = Math.max(0, limit - used);
+    billingUsageEl.textContent = `${used}/${limit} (reste ${remaining})`;
+  }
+
+  if (billingUpgradeBtn) billingUpgradeBtn.disabled = plan === "pro";
+  if (billingManageBtn) billingManageBtn.disabled = plan !== "pro";
+}
+
+async function loadBillingStatus() {
+  if (!accessToken) return null;
+  if (!billingPlanEl || !billingUsageEl) return null;
+  try {
+    setBillingMessage("Chargement...");
+    const status = await apiJson("/api/billing/status", { method: "GET" });
+    renderBillingStatus(status);
+    setBillingMessage("");
+    return status;
+  } catch (e) {
+    setBillingMessage(String(e?.message || e));
+    return null;
+  }
+}
+
+async function startBillingPortal() {
+  if (!accessToken) throw new Error("Non autorisé");
+  const resp = await fetch("/api/billing/portal", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({}),
+  });
+  const data = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(data?.error || "Erreur serveur");
+  if (data?.url) window.location.href = data.url;
+}
+
+function setSmartNoteMessage(msg) {
+  if (!smartNoteMsg) return;
+  smartNoteMsg.textContent = msg || "";
+}
+
+function renderSmartNoteStatus(status) {
+  if (!smartNoteStatusEl) return;
+  smartNoteStatusEl.textContent = status?.connected ? "Connecté" : "Non connecté";
+  if (smartNoteDisconnectBtn) smartNoteDisconnectBtn.disabled = !status?.connected;
+}
+
+async function loadSmartNoteStatus() {
+  if (!accessToken) return null;
+  if (!smartNoteStatusEl) return null;
+  try {
+    const status = await apiJson("/api/smartnote/status", { method: "GET" });
+    renderSmartNoteStatus(status);
+    return status;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function connectSmartNoteWithToken(token) {
+  await apiJson("/api/smartnote/link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken: token, scopes: ["notes:write", "tasks:write", "reminders:write"] }),
+  });
+}
+
+async function startSmartNoteLinking() {
+  setSmartNoteMessage("Redirection...");
+  const data = await apiJson("/api/smartnote/start", { method: "GET" });
+  if (!data?.url) throw new Error("URL de liaison indisponible");
+  window.location.href = data.url;
+}
+
+async function disconnectSmartNote() {
+  await apiJson("/api/smartnote/unlink", { method: "POST" });
+}
+
+function handleSmartNoteReturnParams() {
+  try {
+    const url = new URL(window.location.href);
+    const v = url.searchParams.get("smartnote");
+    if (!v) return;
+
+    if (v === "linked") setSmartNoteMessage("Connecté.");
+    else if (v === "expired") setSmartNoteMessage("Lien expiré. Réessaie.");
+    else setSmartNoteMessage("Erreur de liaison Smart Note.");
+
+    url.searchParams.delete("smartnote");
+    history.replaceState(history.state, "", url.pathname + (url.search ? url.search : ""));
+  } catch {
+    // ignore
+  }
+}
+
+async function smartNoteCreateTaskFromConversationTitle(title) {
+  const convoId = conversationId;
+  const t = String(title || "").trim();
+  if (!convoId) throw new Error("Conversation non sélectionnée");
+  if (!t) throw new Error("Titre requis");
+  return apiJson("/api/smartnote/task", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title: t, source: { app: "sms-agent", conversationId: convoId } }),
+  });
+}
+
 function pathFor(view, threadId) {
   if (view === "messages") return "/messages";
   if (view === "globalSettings") return "/settings";
@@ -491,6 +627,9 @@ function applyRoute(pathname, { fromPop = false } = {}) {
   if (parts[0] === "settings") {
     setScreen("globalSettings");
     loadUserSettings().catch(() => {});
+    loadBillingStatus().catch(() => {});
+    loadSmartNoteStatus().catch(() => {});
+    handleSmartNoteReturnParams();
     return;
   }
   if (parts[0] !== "messages") {
@@ -1259,6 +1398,57 @@ if (billingRefreshBtn) {
       setBillingMessage(String(e?.message || e));
     } finally {
       billingRefreshBtn.disabled = false;
+    }
+  });
+}
+
+if (smartNoteConnectBtn) {
+  smartNoteConnectBtn.addEventListener("click", async () => {
+    try {
+      smartNoteConnectBtn.disabled = true;
+      const token = String(smartNoteTokenEl?.value || "").trim();
+      if (!token) {
+        await startSmartNoteLinking();
+        return;
+      }
+      setSmartNoteMessage("Connexion...");
+      await connectSmartNoteWithToken(token);
+      if (smartNoteTokenEl) smartNoteTokenEl.value = "";
+      await loadSmartNoteStatus();
+      setSmartNoteMessage("Connecté.");
+    } catch (e) {
+      setSmartNoteMessage(String(e?.message || e));
+    } finally {
+      smartNoteConnectBtn.disabled = false;
+    }
+  });
+}
+
+if (smartNoteDisconnectBtn) {
+  smartNoteDisconnectBtn.addEventListener("click", async () => {
+    try {
+      smartNoteDisconnectBtn.disabled = true;
+      setSmartNoteMessage("Déconnexion...");
+      await disconnectSmartNote();
+      await loadSmartNoteStatus();
+      setSmartNoteMessage("Déconnecté.");
+    } catch (e) {
+      setSmartNoteMessage(String(e?.message || e));
+    } finally {
+      smartNoteDisconnectBtn.disabled = false;
+    }
+  });
+}
+
+if (smartNoteRefreshBtn) {
+  smartNoteRefreshBtn.addEventListener("click", async () => {
+    try {
+      smartNoteRefreshBtn.disabled = true;
+      await loadSmartNoteStatus();
+    } catch (e) {
+      setSmartNoteMessage(String(e?.message || e));
+    } finally {
+      smartNoteRefreshBtn.disabled = false;
     }
   });
 }

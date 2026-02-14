@@ -16,6 +16,8 @@ import userSettings from "./user-settings.js";
 import xaiImageModels from "./xai-image-models.js";
 
 import smartNoteLink from "./smartnote/link.js";
+import smartNoteStart from "./smartnote/start.js";
+import smartNoteCallback from "./smartnote/callback.js";
 import smartNoteNote from "./smartnote/note.js";
 import smartNoteReminder from "./smartnote/reminder.js";
 import smartNoteStatus from "./smartnote/status.js";
@@ -55,6 +57,8 @@ const ROUTES = {
   "xai-image-models": xaiImageModels,
 
   "smartnote/status": smartNoteStatus,
+  "smartnote/start": smartNoteStart,
+  "smartnote/callback": smartNoteCallback,
   "smartnote/link": smartNoteLink,
   "smartnote/unlink": smartNoteUnlink,
   "smartnote/note": smartNoteNote,
