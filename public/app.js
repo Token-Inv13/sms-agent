@@ -1073,6 +1073,43 @@ function addMessage(role, text, opts = {}) {
     chat.appendChild(row);
     chat.scrollTop = chat.scrollHeight;
   }
+
+  return row;
+}
+
+function attachRetryToRow(row, { payloadText, attachment }) {
+  try {
+    if (!row) return;
+    row.classList.add("failed");
+
+    const meta = row.querySelector(".meta");
+    if (!meta) return;
+
+    const existing = row.querySelector("button.retryBtn");
+    if (existing) existing.remove();
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "retryBtn";
+    btn.textContent = "Réessayer";
+    btn.addEventListener("click", async () => {
+      try {
+        btn.disabled = true;
+        const answer = await sendToServer(payloadText, attachment);
+        row.classList.remove("failed");
+        btn.remove();
+        addMessage("bot", answer);
+        playBeep("receive");
+        vibrate("receive");
+      } catch (e) {
+        btn.disabled = false;
+      }
+    });
+
+    meta.appendChild(btn);
+  } catch {
+    // ignore
+  }
 }
 
 chat.addEventListener("scroll", () => {
@@ -2037,6 +2074,10 @@ form.addEventListener("submit", async (e) => {
   sendBtn.disabled = true;
   setTyping(true);
 
+  let lastUserRow = null;
+  let lastPayloadText = "";
+  let lastPayloadAttachment = null;
+
   try {
     const pendingExtractedText = pendingAttachment?.extractedText || "";
     const pendingFileName = pendingAttachment?.fileName || pendingAttachment?.file?.name || "";
@@ -2060,11 +2101,11 @@ form.addEventListener("submit", async (e) => {
 
     const attachment = await uploadPendingAttachment();
     if (attachment?.localUrl) {
-      addMessage("user", text || " ", { attachments: [attachment] });
+      lastUserRow = addMessage("user", text || " ", { attachments: [attachment] });
     } else if (attachment?.type === "document") {
-      addMessage("user", text || " ", { attachments: [attachment] });
+      lastUserRow = addMessage("user", text || " ", { attachments: [attachment] });
     } else {
-      addMessage("user", text || " ");
+      lastUserRow = addMessage("user", text || " ");
     }
     playBeep("send");
     vibrate("send");
@@ -2110,6 +2151,20 @@ form.addEventListener("submit", async (e) => {
         }
       }
 
+      lastPayloadText = payloadText || "[image]";
+      lastPayloadAttachment = attachment
+        ? {
+            type: attachment.type,
+            storageBucket: attachment.storageBucket,
+            storagePath: attachment.storagePath,
+            mimeType: attachment.mimeType,
+            sizeBytes: attachment.sizeBytes,
+            width: attachment.width,
+            height: attachment.height,
+            fileName: attachment.fileName,
+          }
+        : null;
+
       const answer = await sendToServer(payloadText || "[image]", attachment
         ? {
             type: attachment.type,
@@ -2127,7 +2182,10 @@ form.addEventListener("submit", async (e) => {
     playBeep("receive");
     vibrate("receive");
   } catch (e) {
-    addMessage("bot", `Échec d'envoi: ${String(e?.message || e)}\nTu peux réessayer en renvoyant le message.`);
+    addMessage("bot", `Échec d'envoi: ${String(e?.message || e)}`);
+    if (lastUserRow && lastPayloadText) {
+      attachRetryToRow(lastUserRow, { payloadText: lastPayloadText, attachment: lastPayloadAttachment });
+    }
   } finally {
     setTyping(false);
     sendBtn.disabled = false;

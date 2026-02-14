@@ -410,6 +410,27 @@ textarea::placeholder{
   margin-top:4px;
 }
 
+.row.failed .bubble{
+  outline:1px solid rgba(255, 85, 85, .55);
+}
+
+.retryBtn{
+  margin-left:10px;
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  font-weight:700;
+  font-size:11px;
+}
+
+.retryBtn:disabled{
+  opacity:.6;
+  cursor:default;
+}
+
 .composer{
   display:flex;
   gap:10px;
