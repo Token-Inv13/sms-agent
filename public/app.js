@@ -1064,6 +1064,46 @@ function addMessage(role, text, opts = {}) {
   const meta = document.createElement("div");
   meta.className = "meta";
   meta.textContent = nowHHMM();
+
+  if (role === "bot") {
+    const copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "copyBtn";
+    copyBtn.textContent = "Copier";
+    copyBtn.addEventListener("click", async (e) => {
+      try {
+        e.preventDefault();
+        e.stopPropagation();
+        const value = String(text || "");
+        if (!value) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(value);
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = value;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.left = "-9999px";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+        }
+
+        copyBtn.textContent = "Copié";
+        setTimeout(() => {
+          copyBtn.textContent = "Copier";
+        }, 900);
+      } catch {
+        copyBtn.textContent = "Erreur";
+        setTimeout(() => {
+          copyBtn.textContent = "Copier";
+        }, 900);
+      }
+    });
+    meta.appendChild(copyBtn);
+  }
   wrap.appendChild(meta);
 
   row.appendChild(wrap);

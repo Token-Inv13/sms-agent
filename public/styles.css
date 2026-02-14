@@ -431,6 +431,23 @@ textarea::placeholder{
   cursor:default;
 }
 
+.copyBtn{
+  margin-left:10px;
+  padding:2px 8px;
+  border-radius:999px;
+  border:1px solid var(--stroke);
+  background:transparent;
+  color:var(--text);
+  cursor:pointer;
+  font-weight:700;
+  font-size:11px;
+}
+
+.copyBtn:disabled{
+  opacity:.6;
+  cursor:default;
+}
+
 .composer{
   display:flex;
   gap:10px;
